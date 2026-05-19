@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>日本記帳 ⛩</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1714;
+    --paper: #f4efe6;
+    --surface: #fffdf8;
+    --surface2: #ede8de;
+    --accent: #c8401e;
+    --accent-light: #f5ddd8;
+    --muted: #8a7f72;
+    --border: #d8d0be;
+    --gold: #b8962e;
+    --green: #4a7c5a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--paper); color: var(--ink); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  body { max-width: 430px; margin: 0 auto; position: relative; }
+
+  /* Typography */
+  .font-serif { font-family: 'Noto Serif TC', serif; }
+  .font-mono { font-family: 'DM Mono', monospace; }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .fade-up { animation: fadeUp .45s ease both; }
+  .d1 { animation-delay:.05s } .d2 { animation-delay:.12s } .d3 { animation-delay:.2s } .d4 { animation-delay:.28s } .d5 { animation-delay:.36s }
+
+  /* Layout */
+  .page { display:none; padding-bottom: 90px; min-height: 100vh; }
+  .page.active { display: block; animation: fadeIn .3s ease; }
+  .px { padding-left: 20px; padding-right: 20px; }
+
+  /* Header */
+  .page-header { padding: 36px 20px 20px; }
+  .page-label { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .page-title { font-family: 'Noto Serif TC', serif; font-size: 30px; line-height: 1.2; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* Card */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .card-hover { transition: all .2s ease; cursor: pointer; }
+  .card-hover:active { transform: scale(.985); }
+
+  /* Buttons */
+  .btn { border: none; cursor: pointer; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; transition: all .2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--accent); color: #fff; padding: 14px 24px; width: 100%; }
+  .btn-primary:hover { background: #a8341a; }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 11px 20px; width: 100%; font-weight: 400; }
+  .btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+  /* Inputs */
+  .input { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 11px 13px; font-size: 15px; color: var(--ink); font-family: 'DM Sans', sans-serif; width: 100%; outline: none; transition: border-color .2s; }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,64,30,.08); }
+  .input::placeholder { color: var(--muted); opacity: .7; }
+  .label { display: block; font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: .03em; }
+  .field { margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7f72' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  /* Bottom Nav */
+  #bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 8px; gap: 3px; cursor: pointer; transition: color .2s; color: var(--muted); border: none; background: none; font-family: 'DM Sans', sans-serif; }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+  .nav-label { font-size: 10px; font-weight: 500; }
+
+  /* Badge */
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 500; }
+  .badge-accent { background: var(--accent-light); color: var(--accent); }
+  .badge-muted { background: var(--surface2); color: var(--muted); }
+
+  /* Progress bar */
+  .progress-track { height: 8px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width .7s ease; }
+
+  /* Category dot */
+  .cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Spinner */
+  .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+
+  /* Toast */
+  #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 999; transition: transform .3s ease; white-space: nowrap; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Upload area */
+  .upload-area { border: 2px dashed var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; cursor: pointer; transition: all .2s; background: var(--surface); }
+  .upload-area:hover { border-color: var(--accent); background: var(--accent-light); }
+  .upload-area img { width: 100%; border-radius: 10px; max-height: 280px; object-fit: contain; }
+
+  /* Chip selector */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 7px 14px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; cursor: pointer; transition: all .15s; color: var(--muted); }
+  .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* User toggle */
+  .user-toggle { display: flex; gap: 8px; }
+  .user-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 14px; cursor: pointer; transition: all .15s; color: var(--muted); text-align: center; }
+  .user-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Receipt row */
+  .receipt-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; transition: all .2s; }
+  .receipt-row:active { transform: scale(.985); }
+  .receipt-info { flex: 1; min-width: 0; }
+  .receipt-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .receipt-meta { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .receipt-amount { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; flex-shrink: 0; }
+
+  /* Day group */
+  .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .day-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .day-total { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* Stats */
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value { font-family: 'Noto Serif TC', serif; font-size: 22px; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Chart bar */
+  .chart-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .chart-bar { width: 100%; background: var(--surface2); border-radius: 4px 4px 0 0; position: relative; overflow: hidden; }
+  .chart-bar-fill { position: absolute; bottom: 0; left: 0; right: 0; background: var(--accent); border-radius: 4px 4px 0 0; opacity: .8; transition: height .6s ease; }
+  .chart-label { font-size: 9px; color: var(--muted); }
+
+  /* Settings */
+  .section-title { font-family: 'Noto Serif TC', serif; font-size: 16px; margin-bottom: 14px; }
+  .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+  .info-box { background: var(--surface2); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
+  .empty-text { font-size: 14px; }
+
+  /* Delete btn */
+  .delete-btn { background: var(--accent-light); color: var(--accent); border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; animation: fadeIn .2s ease; }
+  .modal { background: var(--surface); border-radius: 16px 16px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 430px; max-height: 85vh; overflow-y: auto; animation: fadeUp .25s ease; }
+  .modal-title { font-family: 'Noto Serif TC', serif; font-size: 20px; margin-bottom: 18px; }
+
+  /* Key setup */
+  #key-setup { position: fixed; inset: 0; background: var(--paper); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; }
+  .key-icon { font-size: 56px; margin-bottom: 20px; }
+  .key-title { font-family: 'Noto Serif TC', serif; font-size: 28px; margin-bottom: 10px; }
+  .key-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+  .key-input-wrap { width: 100%; max-width: 360px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<!-- No key setup needed - using Claude AI built-in -->
+
+<!-- Main App -->
+<div id="app">
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <p class="page-label">旅行記帳</p>
+          <h1 class="page-title font-serif">日本記帳</h1>
+        </div>
+        <span style="font-size:40px;opacity:.15;font-family:'Noto Serif TC',serif">⛩</span>
+      </div>
+    </div>
+    <div class="px" id="dashboard-content"></div>
+  </div>
+
+  <!-- Scan -->
+  <div class="page" id="page-scan">
+    <div class="page-header">
+      <p class="page-label">STEP 1</p>
+      <h1 class="page-title font-serif">掃描收據</h1>
+    </div>
+    <div class="px">
+      <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+        <div id="upload-placeholder" style="text-align:center;color:var(--muted)">
+          <div style="font-size:52px;margin-bottom:12px;opacity:.4">📷</div>
+          <p style="font-weight:500;font-size:15px">點擊拍照或上傳圖片</p>
+          <p style="font-size:12px;margin-top:4px;opacity:.7">支援 JPG、PNG、HEIC</p>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+      <div id="scan-actions" style="margin-top:14px;display:none">
+        <button class="btn btn-primary" id="analyze-btn" onclick="analyzeReceipt()" style="margin-bottom:10px">
+          <span>✨</span> 開始 AI 辨識
+        </button>
+        <button class="btn btn-ghost" onclick="resetScan()">重新選擇</button>
+      </div>
+      <div id="scan-placeholder-actions" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+          <span>📸</span> 選擇圖片
+        </button>
+      </div>
+      <div style="margin-top:14px" class="info-box">
+        <strong style="color:var(--ink)">拍照小技巧</strong><br>
+        • 確保收據平整、光線充足<br>
+        • 讓文字清晰，避免模糊<br>
+        • AI 可辨識三種日本稅制（内税/外税/免税）<br>
+        • 辨識後可手動修正任何錯誤
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm (scan result) -->
+  <div class="page" id="page-confirm">
+    <div class="page-header">
+      <p class="page-label">STEP 2</p>
+      <h1 class="page-title font-serif">確認結果</h1>
+      <p class="page-sub">AI 辨識完成，可手動修正</p>
+    </div>
+    <div class="px">
+      <div style="margin-bottom:12px">
+        <span class="badge badge-accent">✨ AI 已辨識</span>
+      </div>
+      <div id="confirm-form"></div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" id="save-btn" onclick="saveReceipt()" style="margin-bottom:10px">✓ 確認儲存</button>
+        <button class="btn btn-ghost" onclick="goToPage('scan')">← 重新掃描</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Add -->
+  <div class="page" id="page-add">
+    <div class="page-header">
+      <h1 class="page-title font-serif">手動輸入</h1>
+      <p class="page-sub">沒有收據？直接手動記帳</p>
+    </div>
+    <div class="px">
+      <div id="add-form"></div>
+      <button class="btn btn-primary" id="add-save-btn" onclick="saveManual()" style="margin-top:4px">✓ 儲存記錄</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="page" id="page-history">
+    <div class="page-header">
+      <h1 class="page-title font-serif">消費記錄</h1>
+      <p class="page-sub" id="history-count"></p>
+    </div>
+    <div class="px">
+      <input class="input" id="history-search" placeholder="搜尋店名、品項..." oninput="renderHistory()" style="margin-bottom:12px">
+      <div id="cat-filter" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px"></div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="page" id="page-stats">
+    <div class="page-header">
+      <h1 class="page-title font-serif">消費統計</h1>
+    </div>
+    <div class="px">
+      <div id="user-filter-stats" style="display:flex;gap:8px;margin-bottom:16px"></div>
+      <div id="stats-content"></div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <h1 class="page-title font-serif">設定</h1>
+    </div>
+    <div class="px" id="settings-content"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav id="bottom-nav">
+    <button class="nav-item active" onclick="goToPage('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">⛩</span><span class="nav-label">總覽</span>
+    </button>
+    <button class="nav-item" onclick="goToPage('scan')" id="nav-scan">
+      <span class="nav-icon">📸</span><span class="nav-label">掃描</span>
+    </button>
+    <button class="nav-item" onclick="goToPage('history')" id="nav-history">
+      <span class="nav-icon">📋</span><span class="nav-label">記錄</span>
+    </button>
+    <button class="nav-item" onclick="goToPage('stats')" id="nav-stats">
+      <span class="nav-icon">📊</span><span class="nav-label">統計</span>
+    </button>
+    <button class="nav-item" onclick="goToPage('settings')" id="nav-settings">
+      <span class="nav-icon">⚙️</span><span class="nav-label">設定</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ─── Constants ───────────────────────────────────────────────
+const CATEGORIES = ['餐飲','交通','購物','門票','住宿','藥品','其他'];
+const PAYMENTS = ['現金','信用卡','Suica','PayPay','其他'];
+const TAX_TYPES = ['内税','外税','免税','不明'];
+const CAT_COLORS = {
+  '餐飲':'#e07b54','交通':'#5b8dd9','購物':'#d4a843',
+  '門票':'#7cb87a','住宿':'#b07cc6','藥品':'#e06b6b','其他':'#8a8a8a'
+};
+
+// ─── State ───────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let selectedImage = null; // base64
+let selectedMime = 'image/jpeg';
+let scanResult = null;
+let historyFilter = '全部';
+let statsUserFilter = '全部';
+
+// ─── Storage ─────────────────────────────────────────────────
+function getReceipts() {
+  try { return JSON.parse(localStorage.getItem('receipts') || '[]'); } catch { return []; }
+}
+function saveReceipts(arr) {
+  localStorage.setItem('receipts', JSON.stringify(arr));
+}
+function getSettings() {
+  const defaults = { budget:300000, exchangeRate:0.21, tripDays:14, tripSchedule:'', user1:'旅人A', user2:'旅人B', budgetNote:'' };
+  try { return { ...defaults, ...JSON.parse(localStorage.getItem('settings') || '{}') }; } catch { return defaults; }
+}
+function saveSettingsData(s) { localStorage.setItem('settings', JSON.stringify(s)); }
+function getApiKey() { return localStorage.getItem('gemini_key') || ''; }
+
+// ─── Key Setup ────────────────────────────────────────────────
+function saveKey() {}
+function checkKey() {
+  initApp();
+}
+
+// ─── Navigation ───────────────────────────────────────────────
+function goToPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+  // hide bottom nav on confirm page
+  document.getElementById('bottom-nav').style.display = page === 'confirm' ? 'none' : 'flex';
+  currentPage = page;
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'history') renderHistory();
+  if (page === 'stats') renderStats();
+  if (page === 'settings') renderSettings();
+  if (page === 'add') renderAddForm();
+  window.scrollTo(0, 0);
+}
+
+// ─── Toast ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Formatting ───────────────────────────────────────────────
+function fmtJPY(n) { return '¥' + Math.round(n).toLocaleString(); }
+function fmtTWD(n, rate) { return 'NT$' + Math.round(n * (rate||0.21)).toLocaleString(); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ─── Schedule parsing ─────────────────────────────────────────
+function getRegion(date, schedule) {
+  if (!schedule) return '';
+  for (const line of schedule.split('\n')) {
+    const m = line.match(/^(.+?)\s+(\d{1,2})\/(\d{1,2})-(\d{1,2})\/(\d{1,2})/);
+    if (!m) continue;
+    const [,region,sm,sd,em,ed] = m;
+    const year = new Date().getFullYear();
+    const start = new Date(year, +sm-1, +sd);
+    const end = new Date(year, +em-1, +ed);
+    const d = new Date(date);
+    if (d >= start && d <= end) return region.trim();
+  }
+  return '';
+}
+
+// ─── Scan ─────────────────────────────────────────────────────
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) { showToast('沒有選到檔案，請重試'); return; }
+  selectedMime = file.type || 'image/jpeg';
+  // Fix: some Android browsers return empty type
+  if (!selectedMime || selectedMime === 'application/octet-stream') selectedMime = 'image/jpeg';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedImage = e.target.result;
+    if (!selectedImage || !selectedImage.includes('base64')) {
+      showToast('圖片讀取失敗，請重試');
+      return;
+    }
+    const area = document.getElementById('upload-area');
+    area.innerHTML = `<img src="${selectedImage}" alt="收據預覽" style="width:100%;border-radius:10px;max-height:280px;object-fit:contain">`;
+    document.getElementById('scan-actions').style.display = 'block';
+    document.getElementById('scan-placeholder-actions').style.display = 'none';
+    showToast('✓ 圖片載入成功，可以開始辨識');
+  };
+  reader.onerror = () => showToast('圖片讀取失敗，請換一張試試');
+  reader.readAsDataURL(file);
+}
+
+function resetScan() {
+  selectedImage = null;
+  document.getElementById('upload-area').innerHTML = `
+    <div id="upload-placeholder" style="text-align:center;color:var(--muted)">
+      <div style="font-size:52px;margin-bottom:12px;opacity:.4">📷</div>
+      <p style="font-weight:500;font-size:15px">點擊拍照或上傳圖片</p>
+      <p style="font-size:12px;margin-top:4px;opacity:.7">支援 JPG、PNG、HEIC</p>
+    </div>`;
+  document.getElementById('scan-actions').style.display = 'none';
+  document.getElementById('scan-placeholder-actions').style.display = 'block';
+  document.getElementById('file-input').value = '';
+}
+
+async function analyzeReceipt() {
+  if (!selectedImage) { showToast('請先選擇圖片'); return; }
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> AI 辨識中...`;
+
+  try {
+    const parts = selectedImage.split(',');
+    if (parts.length < 2) { throw new Error('圖片格式錯誤，請重新選擇'); }
+    const base64 = parts[1];
+
+    const body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: selectedMime, data: base64 } },
+          { type: 'text', text: '分析這張收據，只回傳JSON不要其他文字，格式：{"storeName":"店名中文","storeNameJa":"店名日文","items":"品項中文逗號分隔","itemsJa":"品項日文","amountJPY":金額整數,"taxType":"内税或外税或免税或不明","category":"餐飲或交通或購物或門票或住宿或藥品或其他","paymentMethod":"現金或信用卡或Suica或PayPay或其他","date":"YYYY-MM-DD","notes":"備註"}' }
+        ]
+      }]
+    };
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || '辨識失敗');
+    }
+
+    const data = await res.json();
+    let text = data.content?.[0]?.text || '{}';
+    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    scanResult = JSON.parse(text);
+
+    const s = getSettings();
+    if (!scanResult.region) {
+      scanResult.region = getRegion(scanResult.date || today(), s.tripSchedule);
+    }
+
+    goToPage('confirm');
+    renderConfirmForm();
+
+  } catch (err) {
+    const msg = err.message || '辨識失敗，請重試';
+    alert('❌ 錯誤：' + msg);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✨</span> 開始 AI 辨識';
+  }
+}
+
+
+// ─── Confirm Form ─────────────────────────────────────────────
+function renderConfirmForm() {
+  const s = getSettings();
+  const r = scanResult || {};
+  const users = [s.user1, s.user2];
+  const currentUser = r.user || s.user1;
+
+  document.getElementById('confirm-form').innerHTML = `
+    <div style="margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border)">
+      ${selectedImage ? `<img src="${selectedImage}" style="width:100%;max-height:200px;object-fit:contain;display:block">` : ''}
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="label">店名（中文）</label><input class="input" id="cf-store" value="${r.storeName||''}"></div>
+      <div class="field"><label class="label">店名（日文）</label><input class="input" id="cf-storeJa" value="${r.storeNameJa||''}"></div>
+    </div>
+    <div class="field"><label class="label">品項（中文）</label><input class="input" id="cf-items" value="${r.items||''}"></div>
+    <div class="field"><label class="label">品項（日文）</label><input class="input" id="cf-itemsJa" value="${r.itemsJa||''}"></div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">金額（日幣 ¥）</label>
+        <input class="input font-mono" id="cf-amount" type="number" value="${r.amountJPY||0}" oninput="updateTWD()">
+        <div id="cf-twd" style="font-size:11px;color:var(--muted);margin-top:4px">${fmtTWD(r.amountJPY||0, s.exchangeRate)}</div>
+      </div>
+      <div class="field"><label class="label">日期</label><input class="input" id="cf-date" type="date" value="${r.date||today()}"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="label">類別</label><select class="input" id="cf-cat">${CATEGORIES.map(c=>`<option ${c===r.category?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label class="label">稅制</label><select class="input" id="cf-tax">${TAX_TYPES.map(t=>`<option ${t===r.taxType?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="label">付款方式</label><select class="input" id="cf-pay">${PAYMENTS.map(p=>`<option ${p===r.paymentMethod?'selected':''}>${p}</option>`).join('')}</select></div>
+      <div class="field"><label class="label">地區</label><input class="input" id="cf-region" value="${r.region||''}"></div>
+    </div>
+    <div class="field">
+      <label class="label">記帳人</label>
+      <div class="user-toggle">
+        ${users.map(u=>`<div class="user-btn ${u===currentUser?'selected':''}" onclick="selectUser(this,'${u}')" data-user="${u}">${u}</div>`).join('')}
+      </div>
+    </div>
+    <div class="field"><label class="label">備註</label><textarea class="input" id="cf-notes" rows="2" style="resize:none">${r.notes||''}</textarea></div>
+  `;
+}
+
+function updateTWD() {
+  const s = getSettings();
+  const amt = parseFloat(document.getElementById('cf-amount')?.value) || 0;
+  const el = document.getElementById('cf-twd');
+  if (el) el.textContent = fmtTWD(amt, s.exchangeRate);
+}
+
+function selectUser(el, user) {
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function saveReceipt() {
+  const s = getSettings();
+  const amountJPY = parseFloat(document.getElementById('cf-amount').value) || 0;
+  const selectedUserEl = document.querySelector('.user-btn.selected');
+  const receipt = {
+    id: Date.now().toString(),
+    storeName: document.getElementById('cf-store').value,
+    storeNameJa: document.getElementById('cf-storeJa').value,
+    items: document.getElementById('cf-items').value,
+    itemsJa: document.getElementById('cf-itemsJa').value,
+    amountJPY,
+    amountTWD: Math.round(amountJPY * s.exchangeRate),
+    taxType: document.getElementById('cf-tax').value,
+    category: document.getElementById('cf-cat').value,
+    paymentMethod: document.getElementById('cf-pay').value,
+    date: document.getElementById('cf-date').value,
+    region: document.getElementById('cf-region').value,
+    user: selectedUserEl ? selectedUserEl.dataset.user : s.user1,
+    notes: document.getElementById('cf-notes').value,
+  };
+
+  const receipts = getReceipts();
+  receipts.unshift(receipt);
+  saveReceipts(receipts);
+
+  selectedImage = null;
+  scanResult = null;
+  resetScan();
+  showToast('✓ 已儲存！');
+  goToPage('dashboard');
+}
+
+// ─── Add Form ─────────────────────────────────────────────────
+function renderAddForm() {
+  const s = getSettings();
+  const todayStr = today();
+  document.getElementById('add-form').innerHTML = `
+    <div class="card" style="padding:18px;margin-bottom:14px">
+      <div class="grid2">
+        <div class="field"><label class="label">店名</label><input class="input" id="add-store" placeholder="例：便利商店"></div>
+        <div class="field">
+          <label class="label">金額（日幣 ¥）*</label>
+          <input class="input font-mono" id="add-amount" type="number" placeholder="0" oninput="updateAddTWD()">
+          <div id="add-twd" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+        </div>
+      </div>
+      <div class="field"><label class="label">品項描述 *</label><input class="input" id="add-items" placeholder="例：飯糰、綠茶"></div>
+      <div class="grid2">
+        <div class="field"><label class="label">日期</label><input class="input" id="add-date" type="date" value="${todayStr}" onchange="updateAddRegion()"></div>
+        <div class="field"><label class="label">地區</label><input class="input" id="add-region" value="${getRegion(todayStr, s.tripSchedule)}"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="label">類別</label><select class="input" id="add-cat">${CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="field"><label class="label">付款方式</label><select class="input" id="add-pay">${PAYMENTS.map(p=>`<option>${p}</option>`).join('')}</select></div>
+      </div>
+      <div class="field">
+        <label class="label">記帳人</label>
+        <div class="user-toggle">
+          <div class="user-btn selected" onclick="selectAddUser(this)" data-user="${s.user1}">${s.user1}</div>
+          <div class="user-btn" onclick="selectAddUser(this)" data-user="${s.user2}">${s.user2}</div>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label class="label">備註</label><textarea class="input" id="add-notes" rows="2" style="resize:none"></textarea></div>
+    </div>
+  `;
+}
+
+function selectAddUser(el) {
+  document.querySelectorAll('#add-form .user-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function updateAddTWD() {
+  const s = getSettings();
+  const amt = parseFloat(document.getElementById('add-amount')?.value) || 0;
+  const el = document.getElementById('add-twd');
+  if (el) el.textContent = amt ? fmtTWD(amt, s.exchangeRate) : '';
+}
+function updateAddRegion() {
+  const s = getSettings();
+  const date = document.getElementById('add-date')?.value;
+  const el = document.getElementById('add-region');
+  if (el && date) el.value = getRegion(date, s.tripSchedule);
+}
+
+function saveManual() {
+  const items = document.getElementById('add-items')?.value?.trim();
+  const amountRaw = document.getElementById('add-amount')?.value;
+  if (!items) { showToast('請填入品項描述'); return; }
+  if (!amountRaw) { showToast('請填入金額'); return; }
+
+  const s = getSettings();
+  const amountJPY = parseFloat(amountRaw) || 0;
+  const selectedUserEl = document.querySelector('#add-form .user-btn.selected');
+  const receipt = {
+    id: Date.now().toString(),
+    storeName: document.getElementById('add-store').value,
+    storeNameJa: '',
+    items,
+    itemsJa: '',
+    amountJPY,
+    amountTWD: Math.round(amountJPY * s.exchangeRate),
+    taxType: '内税',
+    category: document.getElementById('add-cat').value,
+    paymentMethod: document.getElementById('add-pay').value,
+    date: document.getElementById('add-date').value,
+    region: document.getElementById('add-region').value,
+    user: selectedUserEl ? selectedUserEl.dataset.user : s.user1,
+    notes: document.getElementById('add-notes').value,
+  };
+
+  const receipts = getReceipts();
+  receipts.unshift(receipt);
+  saveReceipts(receipts);
+  showToast('✓ 已儲存！');
+  goToPage('dashboard');
+}
+
+// ─── Dashboard ────────────────────────────────────────────────
+function renderDashboard() {
+  const receipts = getReceipts();
+  const s = getSettings();
+  const todayStr = today();
+  const todayTotal = receipts.filter(r => r.date === todayStr).reduce((a,r) => a + r.amountJPY, 0);
+  const total = receipts.reduce((a,r) => a + r.amountJPY, 0);
+  const budgetPct = s.budget > 0 ? Math.min((total/s.budget)*100, 100) : 0;
+  const remaining = s.budget - total;
+  const dayBudget = Math.round(s.budget / (s.tripDays || 14));
+
+  // Category totals
+  const catMap = {};
+  receipts.forEach(r => { catMap[r.category] = (catMap[r.category]||0) + r.amountJPY; });
+  const topCats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
+
+  // Recent
+  const recent = [...receipts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  document.getElementById('dashboard-content').innerHTML = `
+    <!-- Budget card -->
+    <div class="card fade-up" style="padding:20px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <p class="stat-label">總預算</p>
+          <p class="font-serif" style="font-size:24px">${fmtJPY(s.budget)}</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:2px">${fmtTWD(s.budget,s.exchangeRate)}</p>
+        </div>
+        <div style="text-align:right">
+          <p class="stat-label">剩餘</p>
+          <p class="font-serif" style="font-size:22px;color:${remaining<0?'var(--accent)':'inherit'}">${fmtJPY(Math.max(0,remaining))}</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:2px">${Math.round(budgetPct)}% 已使用</p>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${budgetPct}%;background:${budgetPct>90?'var(--accent)':'var(--gold)'}"></div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px" class="fade-up d1">
+      <div class="stat-card" style="text-align:center">
+        <p class="stat-label">今日</p>
+        <p class="font-serif" style="font-size:16px">${fmtJPY(todayTotal)}</p>
+      </div>
+      <div class="stat-card" style="text-align:center">
+        <p class="stat-label">總花費</p>
+        <p class="font-serif" style="font-size:16px">${fmtJPY(total)}</p>
+      </div>
+      <div class="stat-card" style="text-align:center">
+        <p class="stat-label">日均預算</p>
+        <p class="font-serif" style="font-size:16px">${fmtJPY(dayBudget)}</p>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="fade-up d2" style="margin-bottom:14px">
+      <button class="btn btn-primary" style="margin-bottom:10px" onclick="goToPage('scan')"><span>📸</span> 掃描收據</button>
+      <button class="btn btn-ghost" onclick="goToPage('add')"><span>✏️</span> 手動輸入</button>
+    </div>
+
+    <!-- Categories -->
+    ${topCats.length > 0 ? `
+    <div class="fade-up d3" style="margin-bottom:14px">
+      <h2 class="font-serif" style="font-size:17px;margin-bottom:12px">消費類別</h2>
+      <div class="card" style="padding:16px">
+        ${topCats.map(([cat,amt]) => {
+          const pct = total > 0 ? (amt/total)*100 : 0;
+          return `<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[cat]||'#8a8a8a'};display:inline-block"></span>${cat}</span>
+              <span class="font-mono" style="font-size:12px">${fmtJPY(amt)}</span>
+            </div>
+            <div class="progress-track" style="height:5px">
+              <div class="progress-fill" style="width:${pct}%;background:${CAT_COLORS[cat]||'#8a8a8a'}"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Recent -->
+    <div class="fade-up d4">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 class="font-serif" style="font-size:17px">最近記錄</h2>
+        <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="goToPage('history')">全部 →</span>
+      </div>
+      ${recent.length === 0 ? `
+        <div class="empty"><div class="empty-icon">🗒</div><p class="empty-text">還沒有記錄，去掃描第一張收據吧！</p></div>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${recent.map(r => `
+            <div class="receipt-row">
+              <div class="cat-dot" style="background:${CAT_COLORS[r.category]||'#8a8a8a'}"></div>
+              <div class="receipt-info">
+                <p class="receipt-name">${r.storeName || r.items}</p>
+                <p class="receipt-meta">${r.date} · ${r.category} · ${r.user}</p>
+              </div>
+              <p class="receipt-amount">${fmtJPY(r.amountJPY)}</p>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+// ─── History ──────────────────────────────────────────────────
+function renderHistory() {
+  const allReceipts = getReceipts();
+  const s = getSettings();
+  const q = document.getElementById('history-search')?.value?.toLowerCase() || '';
+
+  // Category filter chips
+  const catFilterEl = document.getElementById('cat-filter');
+  if (catFilterEl) {
+    catFilterEl.innerHTML = ['全部',...CATEGORIES].map(c =>
+      `<div class="chip ${historyFilter===c?'selected':''}" onclick="setCatFilter('${c}')">${c}</div>`
+    ).join('');
+  }
+
+  let filtered = allReceipts
+    .filter(r => historyFilter === '全部' || r.category === historyFilter)
+    .filter(r => !q || (r.storeName+r.items+r.storeNameJa+r.itemsJa).toLowerCase().includes(q));
+
+  document.getElementById('history-count').textContent = `${filtered.length} 筆記錄`;
+
+  // Group by date
+  const groups = {};
+  filtered.sort((a,b) => b.date.localeCompare(a.date)).forEach(r => {
+    if (!groups[r.date]) groups[r.date] = [];
+    groups[r.date].push(r);
+  });
+
+  const listEl = document.getElementById('history-list');
+  if (!listEl) return;
+
+  if (Object.keys(groups).length === 0) {
+    listEl.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p class="empty-text">沒有符合的記錄</p></div>`;
+    return;
+  }
+
+  listEl.innerHTML = Object.entries(groups).map(([date, rows]) => {
+    const dayTotal = rows.reduce((a,r)=>a+r.amountJPY,0);
+    return `
+      <div style="margin-bottom:20px">
+        <div class="day-header"><span class="day-label">${date}</span><span class="day-total">${fmtJPY(dayTotal)}</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${rows.map(r => `
+            <div class="receipt-row" style="position:relative">
+              <div class="cat-dot" style="width:6px;height:28px;border-radius:3px;background:${CAT_COLORS[r.category]||'#8a8a8a'}"></div>
+              <div class="receipt-info">
+                <p class="receipt-name">${r.storeName || r.items}</p>
+                <p class="receipt-meta">${r.items} · ${r.paymentMethod} · ${r.user}</p>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <p class="receipt-amount">${fmtJPY(r.amountJPY)}</p>
+                <p style="font-size:10px;color:var(--muted)">${fmtTWD(r.amountJPY, s.exchangeRate)}</p>
+              </div>
+              <button class="delete-btn" onclick="deleteReceipt('${r.id}')">🗑</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setCatFilter(cat) {
+  historyFilter = cat;
+  renderHistory();
+}
+
+function deleteReceipt(id) {
+  if (!confirm('確定要刪除這筆記錄嗎？')) return;
+  const receipts = getReceipts().filter(r => r.id !== id);
+  saveReceipts(receipts);
+  renderHistory();
+  showToast('已刪除');
+}
+
+// ─── Stats ────────────────────────────────────────────────────
+function renderStats() {
+  const allReceipts = getReceipts();
+  const s = getSettings();
+  const users = ['全部', s.user1, s.user2];
+
+  // User filter
+  document.getElementById('user-filter-stats').innerHTML = users.map(u =>
+    `<div class="chip ${statsUserFilter===u?'selected':''}" style="flex:1;text-align:center" onclick="setStatsUser('${u}')">${u}</div>`
+  ).join('');
+
+  const receipts = statsUserFilter === '全部' ? allReceipts : allReceipts.filter(r => r.user === statsUserFilter);
+  const total = receipts.reduce((a,r) => a+r.amountJPY, 0);
+  const budgetPct = s.budget > 0 ? Math.min((total/s.budget)*100,100) : 0;
+
+  // Category
+  const catMap = {};
+  receipts.forEach(r => { catMap[r.category] = (catMap[r.category]||0) + r.amountJPY; });
+  const catData = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+
+  // Daily
+  const dayMap = {};
+  receipts.forEach(r => { dayMap[r.date] = (dayMap[r.date]||0) + r.amountJPY; });
+  const dayData = Object.entries(dayMap).sort();
+  const maxDay = Math.max(...dayData.map(d=>d[1]), 1);
+
+  // Payment
+  const payMap = {};
+  receipts.forEach(r => { payMap[r.paymentMethod] = (payMap[r.paymentMethod]||0) + r.amountJPY; });
+
+  // Top 5
+  const top5 = [...receipts].sort((a,b)=>b.amountJPY-a.amountJPY).slice(0,5);
+
+  document.getElementById('stats-content').innerHTML = `
+    <!-- Budget -->
+    <div class="card fade-up" style="padding:18px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+        <div><p class="stat-label">總花費</p><p class="font-serif" style="font-size:24px">${fmtJPY(total)}</p></div>
+        <div style="text-align:right"><p class="stat-label">預算使用</p><p class="font-serif" style="font-size:24px">${Math.round(budgetPct)}%</p></div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${budgetPct}%;background:${budgetPct>90?'var(--accent)':'var(--gold)'}"></div></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">剩餘 ${fmtJPY(Math.max(0,s.budget-total))} · ${fmtTWD(Math.max(0,s.budget-total),s.exchangeRate)}</p>
+    </div>
+
+    <!-- Category -->
+    ${catData.length > 0 ? `
+    <div class="card fade-up d1" style="padding:18px;margin-bottom:14px">
+      <h2 class="font-serif" style="font-size:16px;margin-bottom:14px">類別分布</h2>
+      ${catData.map(([cat,amt]) => {
+        const pct = total > 0 ? Math.round((amt/total)*100) : 0;
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="display:flex;align-items:center;gap:7px">
+              <span style="width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[cat]||'#8a8a8a'};display:inline-block"></span>${cat}
+            </span>
+            <span style="display:flex;gap:10px;align-items:center">
+              <span class="font-mono" style="font-size:11px;color:var(--muted)">${pct}%</span>
+              <span class="font-mono" style="font-size:12px">${fmtJPY(amt)}</span>
+            </span>
+          </div>
+          <div class="progress-track" style="height:5px"><div class="progress-fill" style="width:${pct}%;background:${CAT_COLORS[cat]||'#8a8a8a'}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- Daily trend -->
+    ${dayData.length > 0 ? `
+    <div class="card fade-up d2" style="padding:18px;margin-bottom:14px">
+      <h2 class="font-serif" style="font-size:16px;margin-bottom:14px">每日趨勢</h2>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:100px">
+        ${dayData.map(([date,amt]) => `
+          <div class="chart-bar-wrap" title="${date}: ${fmtJPY(amt)}">
+            <div class="chart-bar" style="height:80px">
+              <div class="chart-bar-fill" style="height:${Math.round((amt/maxDay)*80)}px"></div>
+            </div>
+            <span class="chart-label">${date.slice(5)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Payment -->
+    ${Object.keys(payMap).length > 0 ? `
+    <div class="card fade-up d3" style="padding:18px;margin-bottom:14px">
+      <h2 class="font-serif" style="font-size:16px;margin-bottom:12px">付款方式</h2>
+      ${Object.entries(payMap).sort((a,b)=>b[1]-a[1]).map(([method,amt]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:10px">
+          <span>${method}</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:80px;height:5px;border-radius:3px;background:var(--surface2);overflow:hidden">
+              <div style="height:100%;width:${total>0?Math.round((amt/total)*100):0}%;background:var(--gold);border-radius:3px"></div>
+            </div>
+            <span class="font-mono" style="font-size:12px;min-width:70px;text-align:right">${fmtJPY(amt)}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    <!-- Top 5 -->
+    ${top5.length > 0 ? `
+    <div class="card fade-up d4" style="padding:18px;margin-bottom:14px">
+      <h2 class="font-serif" style="font-size:16px;margin-bottom:12px">最高消費 TOP 5</h2>
+      ${top5.map((r,i) => `
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:12px">
+          <span class="font-mono" style="font-size:11px;color:var(--muted);width:16px">${i+1}</span>
+          <div class="cat-dot" style="background:${CAT_COLORS[r.category]||'#8a8a8a'}"></div>
+          <div style="flex:1;min-width:0">
+            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.storeName||r.items}</p>
+            <p style="font-size:10px;color:var(--muted)">${r.date}</p>
+          </div>
+          <p class="font-mono" style="font-weight:500">${fmtJPY(r.amountJPY)}</p>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    ${receipts.length === 0 ? '<div class="empty"><div class="empty-icon">📊</div><p class="empty-text">還沒有記錄</p></div>' : ''}
+  `;
+}
+
+function setStatsUser(u) {
+  statsUserFilter = u;
+  renderStats();
+}
+
+// ─── Settings ─────────────────────────────────────────────────
+function renderSettings() {
+  const s = getSettings();
+  document.getElementById('settings-content').innerHTML = `
+    <!-- Budget -->
+    <div class="settings-card">
+      <h2 class="section-title">預算設定</h2>
+      <div class="field"><label class="label">總預算（日幣 ¥）</label><input class="input font-mono" id="s-budget" type="number" value="${s.budget}"></div>
+      <div class="field"><label class="label">預算備註</label><input class="input" id="s-note" value="${s.budgetNote}" placeholder="例：287,000現鈔 + 25,000 Suica"></div>
+      <div class="grid2">
+        <div class="field"><label class="label">匯率（JPY→TWD）</label><input class="input font-mono" id="s-rate" type="number" step="0.01" value="${s.exchangeRate}"></div>
+        <div class="field"><label class="label">旅行天數</label><input class="input font-mono" id="s-days" type="number" value="${s.tripDays}"></div>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="settings-card">
+      <h2 class="section-title">行程設定</h2>
+      <div class="field">
+        <label class="label">行程表（地區自動判斷用）</label>
+        <textarea class="input" id="s-schedule" rows="5" style="resize:none" placeholder="格式：地區名稱 MM/DD-MM/DD&#10;例：&#10;名古屋 3/1-3/4&#10;松本 3/5-3/7&#10;高山 3/8-3/10&#10;金澤 3/11-3/14">${s.tripSchedule}</textarea>
+        <p style="font-size:11px;color:var(--muted);margin-top:5px">系統會根據收據日期自動歸類地區</p>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="settings-card">
+      <h2 class="section-title">旅伴設定</h2>
+      <div class="grid2">
+        <div class="field"><label class="label">旅人 1</label><input class="input" id="s-user1" value="${s.user1}"></div>
+        <div class="field"><label class="label">旅人 2</label><input class="input" id="s-user2" value="${s.user2}"></div>
+      </div>
+    </div>
+
+    <!-- API Key -->
+    <div class="settings-card">
+      <h2 class="section-title">API Key 管理</h2>
+      <div class="field"><label class="label">Gemini API Key</label><input class="input" id="s-key" type="password" value="${getApiKey()}"></div>
+      <p class="info-box">Key 只存在你的瀏覽器本機，不會上傳到任何地方。<br>如果辨識失敗，可以在這裡更換新的 Key。</p>
+    </div>
+
+    <!-- Data -->
+    <div class="settings-card">
+      <h2 class="section-title">資料管理</h2>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="exportData()">📤 匯出 CSV</button>
+        <button class="btn" style="flex:1;background:var(--accent-light);color:var(--accent);border:none" onclick="clearData()">🗑 清空資料</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">
+        目前有 ${getReceipts().length} 筆記錄
+      </p>
+    </div>
+
+    <button class="btn btn-primary" id="save-settings-btn" onclick="applySettings()" style="margin-bottom:20px">儲存設定</button>
+  `;
+}
+
+function applySettings() {
+  const s = {
+    budget: parseFloat(document.getElementById('s-budget').value) || 0,
+    budgetNote: document.getElementById('s-note').value,
+    exchangeRate: parseFloat(document.getElementById('s-rate').value) || 0.21,
+    tripDays: parseInt(document.getElementById('s-days').value) || 14,
+    tripSchedule: document.getElementById('s-schedule').value,
+    user1: document.getElementById('s-user1').value || '旅人A',
+    user2: document.getElementById('s-user2').value || '旅人B',
+  };
+  saveSettingsData(s);
+  const newKey = document.getElementById('s-key').value.trim();
+  if (newKey) localStorage.setItem('gemini_key', newKey);
+  showToast('✓ 設定已儲存');
+  document.getElementById('save-settings-btn').textContent = '✓ 已儲存';
+  setTimeout(() => { document.getElementById('save-settings-btn').textContent = '儲存設定'; }, 2000);
+}
+
+function exportData() {
+  const receipts = getReceipts();
+  if (receipts.length === 0) { showToast('沒有資料可以匯出'); return; }
+  const headers = ['日期','店名','店名(日文)','品項','品項(日文)','金額(JPY)','金額(TWD)','類別','付款方式','稅制','地區','用戶','備註'];
+  const rows = receipts.map(r => [
+    r.date, r.storeName, r.storeNameJa, r.items, r.itemsJa,
+    r.amountJPY, r.amountTWD, r.category, r.paymentMethod,
+    r.taxType, r.region, r.user, r.notes
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`));
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `日本記帳_${today()}.csv`;
+  a.click();
+  showToast('✓ 已匯出 CSV');
+}
+
+function clearData() {
+  if (!confirm('確定要清空所有記帳資料嗎？\n此操作無法復原。')) return;
+  saveReceipts([]);
+  showToast('已清空資料');
+  renderSettings();
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+function initApp() {
+  renderDashboard();
+}
+
+// Start
+checkKey();
+</script>
+</body>
+</html>
