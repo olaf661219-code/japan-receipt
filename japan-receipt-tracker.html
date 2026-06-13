@@ -360,7 +360,8 @@ async function analyzeReceipt() {
         ]
       }]
     };
-    const res = await fetch(WORKER_URL, {
+   alert('開始送出請求');
+   const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
