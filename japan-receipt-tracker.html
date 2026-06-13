@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -371,7 +372,7 @@ async function analyzeReceipt() {
     const data = await res.json();
     let text = data.content?.[0]?.text || '{}';
     text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-    scanResult = JSON.parse(text);
+    try { scanResult = JSON.parse(text); } catch(e) { alert('AI回傳內容：' + text.substring(0,300)); return; }
     const s = getSettings();
     if (!scanResult.region) scanResult.region = getRegion(scanResult.date || today(), s.tripSchedule);
     goToPage('confirm');
