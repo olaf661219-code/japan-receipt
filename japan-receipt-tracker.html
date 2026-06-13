@@ -371,7 +371,7 @@ async function analyzeReceipt() {
     }
     const data = await res.json();
     let text = data.content?.[0]?.text || '{}';
-    text = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    alert('原始回傳：' + JSON.stringify(data).substring(0,300));
     try { scanResult = JSON.parse(text); } catch(e) { alert('AI回傳內容：' + text.substring(0,300)); return; }
     const s = getSettings();
     if (!scanResult.region) scanResult.region = getRegion(scanResult.date || today(), s.tripSchedule);
